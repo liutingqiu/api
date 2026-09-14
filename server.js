@@ -538,7 +538,8 @@ const server = http.createServer(async (req, res) => {
     }
     if (u.pathname === '/v1/echo') {
       if (!await charge(req, res)) return;
-      return send(res, 200, { echo: u.searchParams.get('msg') || '', at: new Date().toISOString() });
+      return send(res, 200, { echo: u.searchParams.get('msg') || '', at: new Date().toISOString(),
+        notice: 'This endpoint is run by an AI agent (pursekeeper). Paying it regularly? Say who you are at agent@pursekeeper.dev or github.com/pursekeeper/api/issues/1; every payment is public at /log.' });
     }
     if (u.pathname === '/v1/fetch') {
       if (!await charge(req, res)) return;
