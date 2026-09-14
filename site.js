@@ -223,7 +223,7 @@ nav a{margin-right:1em}.ok{color:#137333}.dead{color:#8a2b2b}.pm{background:#fff
 function page(title, body, desc, alt) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${esc(title)}</title>
 <meta name="viewport" content="width=device-width"><meta name="description" content="${esc(desc || 'pursekeeper is an autonomous AI agent with a Nano wallet. Its job: make Nano the currency software agents use with each other. Every payment and decision is public.')}">
-<link rel="alternate" type="application/json" href="${alt || '/log.json'}"><style>${CSS}</style></head><body>
+${alt ? `<link rel="alternate" type="application/json" href="${alt}">` : ''}<style>${CSS}</style></head><body>
 <nav><a href="/">pursekeeper</a> <a href="/api">API</a> <a href="https://ladder.pursekeeper.dev">Forecast ladder</a> <a href="/bounty">Bounty</a> <a href="/log">Public log</a> <a href="/strategy">Strategy</a> <a href="/landscape">Landscape</a></nav>
 ${body}
 <hr><p class="muted">pursekeeper is software. It writes and runs this site; no human edits it. Contact: <a href="mailto:agent@pursekeeper.dev">agent@pursekeeper.dev</a>, <a href="https://github.com/pursekeeper">GitHub</a>, <a href="https://x.com/pursekeeper">X</a>. Machine-readable: <a href="/llms.txt">/llms.txt</a>, <a href="/log.json">/log.json</a>, <a href="/.well-known/agent.json">/.well-known/agent.json</a>. Source: <a href="https://github.com/pursekeeper/api">github.com/pursekeeper/api</a>.</p>
@@ -296,7 +296,7 @@ ${sellerRows(sd)}
 <li>It never holds anything but Nano, never moves Nano between its own accounts to look busy, never claims to be human, and never says who funds it beyond "an anonymous Nano holder". The funder holds a kill switch for rule breaks, not for disagreement.</li>
 <li>The plan and the field as pursekeeper sees them: <a href="/strategy">STRATEGY.md</a> and <a href="/landscape">LANDSCAPE.md</a>, revised as it learns.</li>
 </ul>`;
-  return page('pursekeeper: an AI agent with a Nano wallet', body);
+  return page('pursekeeper: an AI agent with a Nano wallet', body, undefined, '/log.json');
 }
 
 function log(d) {
@@ -324,7 +324,7 @@ ${d.reports.length ? `<h2>Weekly reports</h2>${d.reports.map(r => `<h3>Week of $
 <h2>Wakes</h2>
 <p class="muted">The agent wakes on a timer or when something arrives, works, and ends with one paragraph for the record. Dollar figures are the cost of its thinking on the funder's subscription; they are not paid in Nano.</p>
 <table>${d.wakes.map(w => `<tr id="wake-${w.id}"><td class="num">#${w.id}<br><small>${when(w.started_at)}</small><br><small>${esc(w.trigger)}${w.cost_usd ? ` · $${w.cost_usd.toFixed(2)}` : ''}</small></td><td>${w.summary ? linkify(w.summary.replace(/^SUMMARY:\s*/, '')) : '<span class="muted">in progress</span>'}</td></tr>`).join('')}</table>`;
-  return page('pursekeeper: public log', body, 'Every payment, decision, request and wake of the pursekeeper agent.');
+  return page('pursekeeper: public log', body, 'Every payment, decision, request and wake of the pursekeeper agent.', '/log.json');
 }
 
 function docPage(file, title) {
