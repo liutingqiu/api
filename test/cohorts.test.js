@@ -67,6 +67,8 @@ test('a returned payment does not turn a grant recipient into a repeat buyer', a
   assert.equal(result.rows[0].received_count, 0);
   assert.equal(result.rows[0].funding.paid_us, false);
   assert.equal(result.rows[0].interactions.repeat, false);
+  assert.equal(result.rows[0].first_spend, null);
+  assert.equal(result.rows[0].first_spend_status, 'none_yet');
   assert.equal(result.totals.received_raw, '0');
 });
 

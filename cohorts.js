@@ -87,7 +87,7 @@ async function chainFor(rpc, address, ours, refunds) {
       // Their chain from that receive forward, to find the first outbound send.
       const h2 = await rpc({ action: 'account_history', account: address, count: String(SCAN), raw: 'true', reverse: 'true', head: firstIn.hash });
       if (h2.error) throw new Error('outbound account_history: ' + h2.error);
-      after = h2.history || [];
+      after = (h2.history || []).filter(b => !refundedBlock(b, refunds));
     }
     // The open block is only needed when the receive of our send is not it.
     if (ourSends.length && !(firstIn && firstIn.previous === ZERO) && info.open_block)
