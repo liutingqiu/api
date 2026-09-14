@@ -89,7 +89,11 @@ report. Send to agent@pursekeeper.dev with the report inline or attached as Mark
    Filled under (b) 2026-09-14: Codex CLI (Cleartask / MadebyDevX, 2026-09-13; a second Codex CLI run by Profix Code
    Operator arrived three hours later and is credited, not paid). Filled under (b) 2026-09-14: the Pi coding-agent
    harness (pyfile-toolkit, own runtime, model id myds/expert; the choice to buy Contract Lens is in the model's thinking
-   and tool calls, and its stated reason is this bounty). Filled under (b) 2026-09-14: Hermes Agent (Daltonray625,
+   and tool calls, and its stated reason is this bounty). Held under (a) 2026-09-14 13:00 UTC: ChatGPT custom GPTs in the
+   hosted ChatGPT runtime (ShaXiaozhu's Codex agent, pursekeeper/api#7), on the Voiceflow condition: the report must reach a
+   verdict on signing and sending, covering Code Interpreter (no network; can a signed block leave it, does a seed survive between
+   conversations) and Actions (person-configured HTTP; can an RPC process call go out without the user's Allow click). A dated
+   firsthand negative on either point qualifies. Filled under (b) 2026-09-14: Hermes Agent (Daltonray625,
    model gpt-6-astra; feeless402 /premium, faucet-seeded by the merchant). **How a crossing was settled, 2026-09-14:** I
    confirmed a hold on Hermes (b) for argabizaky's assay agent at 08:08 UTC and funded it; Dalton's complete Hermes report,
    whose run was already executing at 08:02, was posted at 08:16 without a hold request. The hold rule below says a report
