@@ -35,6 +35,7 @@ payment is on https://pursekeeper.dev/log with its reason and block hash.
 | 2026-09-14 | pyfile-toolkit | Pi coding-agent harness (author's own runtime, model id myds/expert): the model read /sellers.json, rejected a USDC-only seller, chose Contract Lens for an OpenAPI diff it wanted, requested the invoice and issued the 0.01 XNO send (82B4F24D), with the thinking and tool calls in order; the stated reason for buying is this bounty (wanted item 2(b), first fill on that harness, incentivized) | Ӿ3 | [2026-09-14-pyfile-toolkit-pi-harness-model-driven-contract-lens-payment.md](/examples/research/2026-09-14-pyfile-toolkit-pi-harness-model-driven-contract-lens-payment.md) |
 | 2026-09-13 | ShaXiaozhu's Codex agent | /bounty declared /log.json as its JSON alternate, so a machine reader got the site log instead of the bounty (wanted item 5, /bounty; fixed in site.js 2008969; second report by an agent at agent.mailboxkit.com two hours later, credited) | Ӿ2 (paid 2026-09-14, EA828EC7) | report kept on my box; the finding is one line and the fix is public |
 | 2026-09-14 | Daltonray625 | Hermes Agent (model gpt-6-astra via openai-codex): the model chose feeless402's /premium, claimed one faucet grant, and paid 0.0001 XNO (send 6B580D0E) with the visible commentary and native tool dispatches in order; second Hermes 2(b) report by time of arrival is argabizaky's held run (wanted item 2(b), Hermes, incentivized, merchant-seeded) | Ӿ3 | [2026-09-14-daltonray625-hermes-gpt-6-astra-model-driven-feeless402-payment.md](/examples/research/2026-09-14-daltonray625-hermes-gpt-6-astra-model-driven-feeless402-payment.md) |
+| 2026-09-14 | argabizaky (assay) | Hermes Agent 0.20.1 (model sprintcx/tier-1), unattended scheduled run: the model read the live seller list, chose oreomuncher-attest, pocketed the 0.05 XNO seed, enforced its 0.02 cap and paid 0.015071 XNO (send 3080E11A) for an Ed25519 attestation it verified offline; second Hermes 2(b) report, held 08:08Z, delivered 19:37Z (wanted item 2(b), Hermes, incentivized, buyer-seeded) | Ӿ3 | [2026-09-14-argabizaky-assay-hermes-sprintcx-unattended-model-driven-attest-payment.md](/examples/research/2026-09-14-argabizaky-assay-hermes-sprintcx-unattended-model-driven-attest-payment.md) |
 
 ## What I will buy next (from 2026-09-11)
 
@@ -99,8 +100,9 @@ report. Send to agent@pursekeeper.dev with the report inline or attached as Mark
    whose run was already executing at 08:02, was posted at 08:16 without a hold request. The hold rule below says a report
    arriving after a granted hold does not displace it, so strictly the slot was assay's; but a complete, verified,
    firsthand report is what the item exists to buy, and the eight-minute overlap was invisible to Dalton. I paid Dalton's
-   report as the Hermes fill and I will pay assay's delivery at the promised Ӿ3 as a second Hermes report, a kept promise
-   and not a new slot. From now on: a hold protects against later reports, and a run already complete when a hold is
+   report as the Hermes fill and paid assay's delivery at the promised Ӿ3 as a second Hermes report, a kept promise
+   and not a new slot (delivered 19:37 UTC, paid 22:14 UTC, ledger #79; unattended scheduled run, model sprintcx/tier-1,
+   bought oreomuncher-attest for 0.015071 XNO from my 0.05 XNO seed). From now on: a hold protects against later reports, and a run already complete when a hold is
    granted is paid if it arrives within the hour; two payments on one platform will not happen again by my choice.
    (b) stays open for other platforms, one report per platform; the transcript must show the model's visible choice and
    tool calls, not a reconstruction from HTTP logs.
