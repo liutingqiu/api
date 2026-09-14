@@ -67,7 +67,32 @@ test('a returned payment does not turn a grant recipient into a repeat buyer', a
   assert.equal(result.rows[0].received_count, 0);
   assert.equal(result.rows[0].funding.paid_us, false);
   assert.equal(result.rows[0].interactions.repeat, false);
+  assert.equal(result.rows[0].first_spend, null);
+  assert.equal(result.rows[0].first_spend_status, 'none_yet');
   assert.equal(result.totals.received_raw, '0');
+});
+
+test('refund filtering does not hide an exhausted first-spend scan', async () => {
+  const grant = blk({ subtype: 'send', account: A, hash: 'GRANT', at: T0 });
+  const refundSend = blk({ subtype: 'send', account: US, hash: 'BACK', at: T0 + 2, height: 2 });
+  const refundReceive = blk({ subtype: 'receive', account: A, hash: 'REFUND-RECEIVE', link: 'BACK', at: T0 + 3 });
+  const opened = blk({ subtype: 'receive', account: US, hash: 'OPEN', link: 'GRANT', previous: ZERO, at: T0 + 1 });
+  const fullScan = [opened, refundSend, ...Array.from({ length: SCAN - 2 }, (_, i) =>
+    blk({ subtype: 'receive', account: 'nano_x', hash: 'H' + i, at: T0 + 4 + i, height: 3 + i }))];
+  const ledger = [
+    { id: 1, kind: 'payment_out', counterparty: A, amount_raw: grant.amount, block_hash: 'GRANT' },
+    { id: 2, kind: 'payment_in', counterparty: A, amount_raw: refundReceive.amount, block_hash: 'REFUND-RECEIVE', reason: 'Refund of change' }
+  ];
+  const rpc = async body => {
+    if (body.action === 'account_history' && body.account === US) return { history: [grant, refundReceive] };
+    if (body.action === 'account_info') return { open_block: 'OPEN' };
+    if (body.action === 'account_history' && body.head) return { history: fullScan };
+    if (body.action === 'account_history' && body.account === A) return { history: [opened, refundSend] };
+    throw new Error('unexpected fixture RPC');
+  };
+  const result = await computeCohorts({ ledger, rpc });
+  assert.equal(result.rows[0].first_spend, null);
+  assert.equal(result.rows[0].first_spend_status, 'unknown');
 });
 
 test('opened by our payment: receive of our send is the open block', () => {
@@ -142,7 +167,7 @@ test('first spend unknown when the scan window is exhausted', () => {
   const ourSend = blk({ subtype: 'send', account: B, hash: 'S1', at: T0, height: 3 });
   const theirRecv = blk({ subtype: 'receive', account: US, hash: 'R1', link: 'S1', previous: ZERO, at: T0 + 5, height: 1 });
   const after = [theirRecv, ...Array.from({ length: SCAN - 1 }, (_, i) => blk({ subtype: 'receive', account: 'nano_x', hash: 'H' + i, at: T0 + 6 + i, height: 2 + i }))];
-  const r = classify(cp(B), { ourSends: [ourSend], ourReceives: [], exists: true, info: {}, withUs: [theirRecv], after, open: null });
+  const r = classify(cp(B), { ourSends: [ourSend], ourReceives: [], exists: true, info: {}, withUs: [theirRecv], after, afterScanExhausted: true, open: null });
   assert.equal(r.first_spend_status, 'unknown');
 });
 

@@ -75,7 +75,7 @@ async function chainFor(rpc, address, ours, refunds) {
   const info = await rpc({ action: 'account_info', account: address, include_confirmed: 'true' });
   const exists = !info.error;
   if (info.error && info.error !== 'Account not found') throw new Error('account_info: ' + info.error);
-  let withUs = [], after = [], open = null;
+  let withUs = [], after = [], afterScanExhausted = false, open = null;
   if (exists) {
     // Only the blocks that touch our address, oldest first: their receives of our
     // sends and their sends to us. `count` limits matches, not blocks scanned.
@@ -87,13 +87,15 @@ async function chainFor(rpc, address, ours, refunds) {
       // Their chain from that receive forward, to find the first outbound send.
       const h2 = await rpc({ action: 'account_history', account: address, count: String(SCAN), raw: 'true', reverse: 'true', head: firstIn.hash });
       if (h2.error) throw new Error('outbound account_history: ' + h2.error);
-      after = h2.history || [];
+      const rawAfter = h2.history || [];
+      afterScanExhausted = rawAfter.length >= SCAN;
+      after = rawAfter.filter(b => !refundedBlock(b, refunds));
     }
     // The open block is only needed when the receive of our send is not it.
     if (ourSends.length && !(firstIn && firstIn.previous === ZERO) && info.open_block)
       open = await rpc({ action: 'block_info', json_block: 'true', hash: info.open_block });
   }
-  return { ourSends, ourReceives, exists, info, withUs, after, open };
+  return { ourSends, ourReceives, exists, info, withUs, after, afterScanExhausted, open };
 }
 
 // --- ledger ------------------------------------------------------------------
@@ -173,7 +175,7 @@ function addChainOnly(cps, ours, own) {
 const sum = rows => rows.reduce((a, b) => a + BigInt(b.amount || b.amount_raw || 0), 0n);
 
 function classify(cp, chain, refunds = loadRefundHashes()) {
-  const { ourSends, exists, withUs, after, open } = chain;
+  const { ourSends, exists, withUs, after, afterScanExhausted = false, open } = chain;
   const theirSends = withUs.filter(b => b.subtype === 'send' && !refundedBlock(b, refunds));
   const firstIn = withUs.find(b => b.subtype === 'receive');
   const paidByUs = ourSends.length > 0 || cp.ledger_out.length > 0;
@@ -199,7 +201,7 @@ function classify(cp, chain, refunds = loadRefundHashes()) {
   if (firstIn) {
     const out = after.find(b => b.subtype === 'send' && Number(b.height) > Number(firstIn.height));
     if (out) { first_spend = { at: iso(ts(out)), hash: out.hash, to: out.account, to_us: out.account === ADDRESS, amount_raw: out.amount }; first_spend_status = out.account === ADDRESS ? 'to_us' : 'elsewhere'; }
-    else first_spend_status = after.length >= SCAN ? 'unknown' : 'none_yet';
+    else first_spend_status = afterScanExhausted ? 'unknown' : 'none_yet';
   }
 
   // 4. repeat: every send between the two accounts, either direction, by chain time
