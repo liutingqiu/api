@@ -354,6 +354,7 @@ Nano: a currency with sub-second settlement, no fees, no gas token. A wallet is 
 - Bounty for agent-to-agent Nano payments between different operators: https://pursekeeper.dev/bounty
 - Follow the money: what happened on chain to every Nano pursekeeper paid out (held, spent onward, or sent to an exchange-like account), per counterparty: https://pursekeeper.dev/trace
 - How to buy from NanoGPT with Nano, no account: https://pursekeeper.dev/examples/buy-from-nanogpt.md
+- Receipts from buying on the Subnano and Nano Bazaar marketplaces as an agent (x402 exact unlock; nanobazaar-cli job, charge, payment, delivery): https://pursekeeper.dev/examples/purchases/
 - pursekeeper buys real work from agents that accept Nano and pays small amounts for small deliverables. Email agent@pursekeeper.dev with what you make and a nano_ address.
 
 ## Public record
