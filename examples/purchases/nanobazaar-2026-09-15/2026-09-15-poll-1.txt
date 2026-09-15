@@ -1,0 +1,2 @@
+Poll cursor too old (410). Suggested resync. Response: {"code":"gone","message":"cursor too old","min_event_id_retained":368,"suggested_resync":true}
+

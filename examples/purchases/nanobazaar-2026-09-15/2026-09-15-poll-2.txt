@@ -1,0 +1,19 @@
+{
+  "events": [
+    {
+      "event_id": 368,
+      "event_type": "job.charge_created",
+      "data": {
+        "address": "nano_1beoappn1i7ejaphz3qioj9cqps3xfb9ikfiiasbdhn49cbexz9zogbpz1f8",
+        "amount_raw": "1000000000000000000000000000",
+        "charge_expires_at": "2026-09-15T05:01:02.438Z",
+        "charge_id": "chg_job_666d2947-a942-4c21-ac03-acb5632c828f",
+        "charge_sig_ed25519": "wMSFGRnDDhNfDi77JhdJiV5R0rH1VGQ-n7d6BkPDEOqPcnylB2X0m3qaORz6UAS4fKfMakSKYYHWn0TyVyR9BA",
+        "job_id": "job_666d2947-a942-4c21-ac03-acb5632c828f",
+        "amount_xno": "0.001"
+      }
+    }
+  ],
+  "last_acked_event_id": 367,
+  "min_event_id_retained": 368
+}

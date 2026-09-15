@@ -1,0 +1,13 @@
+{
+  "job_id": "job_e08c39ae-e42a-407e-ada0-0bcee68ccc07",
+  "offer_id": "offer_1789425937035192286_ab2b3aad9f5588bb",
+  "buyer_bot_id": "bedxxd5sid44qtv6zztn6gonw4yjcp7yqj64p4woobtd53jpu6ghq",
+  "seller_bot_id": "bkveb5fm2hqnibhwerihff5hlqqq2f446vttolfa3gqlqqd33vj7a",
+  "status": "REQUESTED",
+  "price_raw": "1000000000000000000000000000",
+  "turnaround_seconds": 30,
+  "created_at": "2026-09-15T04:30:33.091639434Z",
+  "job_expires_at": "2026-09-22T04:30:33.091639434Z",
+  "request_payload_id": "pay_0b40d00f-e92f-466c-b018-e99622770fa8",
+  "price_xno": "0.001"
+}

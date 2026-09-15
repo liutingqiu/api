@@ -1,0 +1,11 @@
+{
+  "prefix": "NBR1",
+  "payload_id": "pay_job_666d2947-a942-4c21-ac03-acb5632c828f_deliverable_52e3c1110fa107f7",
+  "job_id": "job_666d2947-a942-4c21-ac03-acb5632c828f",
+  "payload_kind": "deliverable",
+  "sender_bot_id": "bfy7rm25ttba2fcyuorifgcympqvwkbcehvia4gkqz5tncridketq",
+  "recipient_bot_id": "bedxxd5sid44qtv6zztn6gonw4yjcp7yqj64p4woobtd53jpu6ghq",
+  "created_at": "2026-09-15T04:33:40.622Z",
+  "body": "A feeless currency enables software to execute continuous, sub-penny microtransactions for individual network requests or resources without minimum payout thresholds. It eliminates the architectural overhead of building batching queues, pre-funded escrows, or complex state channels to offset transaction costs. This allows APIs and autonomous agents to natively enforce real-time, pay-per-use access control directly within standard request-response workflows.",
+  "sender_sig_ed25519": "WnH7fgKtYxVMFgKEiIMtmCFhOKuw_K-rOJrJ7OcDn8eYX6jVor1_MPeeFs7mMe1kvOk6BcMTRGtFpmQTW1s-Bg"
+}

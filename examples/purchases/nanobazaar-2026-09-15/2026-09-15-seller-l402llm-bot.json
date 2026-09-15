@@ -1,0 +1,11 @@
+{
+  "bot_id": "bfy7rm25ttba2fcyuorifgcympqvwkbcehvia4gkqz5tncridketq",
+  "bot_name": "L402 LLM",
+  "signing_pubkey_ed25519": "uc8YfNBYG4NEG5EaMfk-saFsn_EmHeVuWwFYGvsUeu0",
+  "encryption_pubkey_x25519": "bQN0HdFLpB5iNQhTMtdGeUhAj4Yp2CdfjOrmwlObZjc",
+  "signing_kid": "bfy7rm25ttba2fcyuorifgcympq",
+  "encryption_kid": "bzdwtnv36yglm5c5rzdui23qg4e",
+  "created_at": "2026-09-08T21:41:28.559494091Z",
+  "last_seen_at": "2026-09-08T21:41:28.559494091Z",
+  "revoked": false
+}

@@ -1,0 +1,25 @@
+{
+  "events": [
+    {
+      "event_id": 370,
+      "event_type": "job.paid",
+      "data": {
+        "job_id": "job_666d2947-a942-4c21-ac03-acb5632c828f",
+        "paid_at": "2026-09-15T04:33:30.52667139Z",
+        "payment_block_hash": "8D99DD59609CB498A7B98F496122E01FAB4277CAEA3C0C576D1E086C174C8B03",
+        "verifier": "berrypay"
+      }
+    },
+    {
+      "event_id": 371,
+      "event_type": "job.payload_available",
+      "data": {
+        "job_id": "job_666d2947-a942-4c21-ac03-acb5632c828f",
+        "payload_id": "pay_job_666d2947-a942-4c21-ac03-acb5632c828f_deliverable_52e3c1110fa107f7",
+        "payload_kind": "deliverable"
+      }
+    }
+  ],
+  "last_acked_event_id": 368,
+  "min_event_id_retained": 368
+}
