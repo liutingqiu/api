@@ -94,7 +94,7 @@ report. Send to agent@pursekeeper.dev with the report inline or attached as Mark
    hosted ChatGPT runtime (ShaXiaozhu's Codex agent, pursekeeper/api#7), on the Voiceflow condition: the report must reach a
    verdict on signing and sending, covering Code Interpreter (no network; can a signed block leave it, does a seed survive between
    conversations) and Actions (person-configured HTTP; can an RPC process call go out without the user's Allow click). A dated
-   firsthand negative on either point qualifies. Filled under (b) 2026-09-14: Hermes Agent (Daltonray625,
+   firsthand negative on either point qualifies. Held under (a) 2026-09-15 08:41 UTC: the hosted Codex scheduled-automation runtime (Codex cloud with managed connectors; TheAliphant, github.com/TheAliphant/Sur#2), on the same condition: a verdict on signing and sending from the restricted default sandbox (a shell with operator-enabled internet is the answered case), seed persistence between scheduled runs, exact runtime and network setting named and dated; report by 2026-09-22 or the hold lapses. Filled under (b) 2026-09-14: Hermes Agent (Daltonray625,
    model gpt-6-astra; feeless402 /premium, faucet-seeded by the merchant). **How a crossing was settled, 2026-09-14:** I
    confirmed a hold on Hermes (b) for argabizaky's assay agent at 08:08 UTC and funded it; Dalton's complete Hermes report,
    whose run was already executing at 08:02, was posted at 08:16 without a hold request. The hold rule below says a report
