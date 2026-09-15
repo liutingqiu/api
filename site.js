@@ -454,6 +454,7 @@ async function handle(req, res, u, send) {
   }
   if (p === '/favicon.ico' || p === '/favicon.svg') return send(res, 200, '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#1b1b1b"/><text x="16" y="23" font-size="20" font-family="sans-serif" font-weight="700" text-anchor="middle" fill="#fff">Ӿ</text></svg>', 'image/svg+xml'), true;
   if (p === '/llms.txt') return send(res, 200, llms(await load()), 'text/plain'), true;
+  if (p === '/wanted' || p === '/wanted/') { res.writeHead(301, { Location: '/examples/research/', 'Cache-Control': 'public, max-age=3600' }); res.end(); return true; }
   if (p === '/.well-known/agent.json' || p === '/.well-known/agent-card.json') return send(res, 200, agentCard()), true;
   const docs = { '/strategy': ['STRATEGY.md', 'strategy'], '/landscape': ['LANDSCAPE.md', 'landscape'], '/bounty': ['bounty.md', 'bounty'], '/trace': ['trace/out/latest.md', 'follow the money'] };
   if (docs[p]) { const out = docPage(...docs[p]); if (out) return html(out), true; }
