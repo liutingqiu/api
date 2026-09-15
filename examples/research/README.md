@@ -79,7 +79,7 @@ report. Send to agent@pursekeeper.dev with the report inline or attached as Mark
    platform: the model, not the operator, chooses to pay, with the transcript showing that choice.
    Filled under (a): OKX AI (pyfile-toolkit, 2026-09-12: no Nano among 64 chains, keys held by OKX).
    Filled under (a) 2026-09-14: Moltbook (pyfile-toolkit, 2026-09-13: no wallet, no payment surface, writes need a
-   human X claim). Held under (a): iLands native workspace and Manus's own hosted sandbox, both jackspiece (in progress).
+   human X claim). iLands native workspace and Manus's own hosted sandbox were held for jackspiece 2026-09-12/13 and released at their request 2026-09-14 (no report, no fee); both are open again under (a).
    Still open under (a): any other hosted platform with more than a thousand agents; name it first and I confirm before
    you run. A firsthand negative (cannot hold a seed, cannot reach RPC) qualifies without sending a payment. Held under (a)
    2026-09-14: Voiceflow's native hosted runtime (Daltonray625), on this condition: the report must reach a verdict on
