@@ -68,6 +68,27 @@ test('a receipt from the cold-storage sender is a tranche, not inflow, and its a
 // /sellers advertised /log.json, so a crawler following it got the log, not the sellers).
 // Since 2026-09-14 (ShaXiaozhu's Codex agent: /bounty advertised /log.json) a page with no JSON form
 // advertises nothing at all.
+test('a pass-through wallet is counted as the account that funded it', () => {
+  const P1 = 'nano_1passthru1111111111111111111111111111111111111111111111111111';
+  const P2 = 'nano_1passthru2222222222222222222222222222222222222222222222222222';
+  const via = new Map([[P1, B], [P2, B]]);
+  // two Subnano-style purchases by the same buyer B through two one-time wallets: one counterparty, both amounts count
+  let n = counterpartyNumbers([row('payment_in', P1, '0.185'), row('payment_in', P2, '0.95')], new Set(), nanoToRaw('0.01'), via);
+  assert.equal(n.external.counterparties, 1);
+  assert.equal(n.external.nano, nanoToRaw('1.135'));
+  assert.equal(n.external.passthrough_wallets, 2);
+  assert.equal(n.counterparties.in, 1);
+  // a pass-through funded by an address we paid is exchange, not inflow (one hop back)
+  n = counterpartyNumbers([row('payment_out', B, '0.2'), row('payment_in', P1, '0.185')], new Set(), nanoToRaw('0.01'), via);
+  assert.equal(n.external.counterparties, 0);
+  assert.equal(n.external.nano, 0n);
+  assert.equal(n.counterparties.both, 1);
+  // without a via map nothing changes
+  n = counterpartyNumbers([row('payment_in', P1, '0.185'), row('payment_in', P2, '0.95')], new Set(), nanoToRaw('0.01'));
+  assert.equal(n.external.counterparties, 2);
+  assert.equal(n.external.passthrough_wallets, 0);
+});
+
 test('page() advertises only the alternate it is given, none by default', () => {
   const { page } = require('../site');
   assert.doesNotMatch(page('t', '<p>b</p>'), /<link rel="alternate"/);

@@ -37,9 +37,13 @@ const COUNTERPARTY_MIN_RAW = nanoToRaw(COUNTERPARTY_MIN_NANO);
 
 // The counterparty and inflow numbers from ledger rows. `ownExtra` is the set of other
 // addresses pursekeeper controls (never counterparties). Pure, so it can be tested.
-function counterpartyNumbers(ledger, ownExtra = new Set(), minRaw = COUNTERPARTY_MIN_RAW) {
+function counterpartyNumbers(ledger, ownExtra = new Set(), minRaw = COUNTERPARTY_MIN_RAW, via = new Map()) {
   const sum = rows => rows.reduce((a, r) => a + BigInt(r.amount_raw), 0n);
-  const cpLedger = ledger.filter(r => !ownExtra.has(r.counterparty));
+  // A one-time pass-through wallet (Subnano purchases and tips arrive this way: an account
+  // opened for one payment, funded by the buyer, emptied to pursekeeper and the platform
+  // fee) is counted as the account that funded it, so eleven purchases by three buyers
+  // are three counterparties, and a buyer pursekeeper had paid is not a stranger.
+  const cpLedger = ledger.filter(r => !ownExtra.has(r.counterparty)).map(r => via.has(r.counterparty) ? { ...r, counterparty: via.get(r.counterparty), via: r.counterparty } : r).filter(r => !ownExtra.has(r.counterparty));
   const paid = new Set(cpLedger.filter(r => r.kind === 'payment_out').map(r => r.counterparty));
   const inTotals = new Map();
   for (const r of cpLedger) if (r.kind === 'payment_in') inTotals.set(r.counterparty, (inTotals.get(r.counterparty) || 0n) + BigInt(r.amount_raw));
@@ -47,7 +51,8 @@ function counterpartyNumbers(ledger, ownExtra = new Set(), minRaw = COUNTERPARTY
   const inflowRows = cpLedger.filter(r => r.kind === 'payment_in' && !paid.has(r.counterparty));
   const inflowAddrs = [...new Set(inflowRows.map(r => r.counterparty))];
   const external = { nano: sum(inflowRows), counterparties: inflowAddrs.filter(qualifies).length,
-    below_threshold: inflowAddrs.filter(a => !qualifies(a)).length, min_nano: COUNTERPARTY_MIN_NANO };
+    below_threshold: inflowAddrs.filter(a => !qualifies(a)).length, min_nano: COUNTERPARTY_MIN_NANO,
+    passthrough_wallets: [...via.keys()].filter(a => cpLedger.some(r => r.via === a)).length };
   const inSet = new Set([...inTotals.keys()].filter(qualifies));
   const counterparties = { out: paid.size, in: inSet.size, both: new Set([...paid, ...inSet]).size,
     in_below_threshold: [...inTotals.keys()].filter(a => !qualifies(a) && !paid.has(a)).length, min_nano: COUNTERPARTY_MIN_NANO };
@@ -87,6 +92,38 @@ function reclassifyCold(ledger, cold) {
     : r);
 }
 
+// Pass-through wallets. An address that paid pursekeeper is a pass-through when the chain
+// shows it was opened by a single receive from one account and has done nothing since
+// but pay out (at most four blocks, one funding account, emptied within an hour). Its payment is attributed to
+// the funding account. Looked up on the node once per address and remembered; an
+// address that was not a pass-through when first seen is re-checked only while it is
+// still small (a wallet emptied later cannot become one).
+const PASSTHROUGH_MAX_BLOCKS = 4;
+const viaCache = new Map();   // address -> funding account | null
+async function passthroughSources(ledger, rpcFn, ownExtra = new Set()) {
+  const via = new Map();
+  const addrs = [...new Set(ledger.filter(r => r.kind === 'payment_in' && r.counterparty && r.counterparty.startsWith('nano_') && !ownExtra.has(r.counterparty)).map(r => r.counterparty))];
+  for (const a of addrs) {
+    if (viaCache.has(a)) { if (viaCache.get(a)) via.set(a, viaCache.get(a)); continue; }
+    try {
+      const h = await rpcFn({ action: 'account_history', account: a, count: String(PASSTHROUGH_MAX_BLOCKS + 1) });
+      const hist = h.history || [];
+      if (!hist.length || hist.length > PASSTHROUGH_MAX_BLOCKS) { viaCache.set(a, null); continue; }
+      const receives = hist.filter(x => x.type === 'receive');
+      const sends = hist.filter(x => x.type === 'send');
+      const funders = new Set(receives.map(x => x.account));
+      const amt = rows => rows.reduce((t, x) => t + BigInt(x.amount || 0), 0n);
+      const ts = hist.map(x => Number(x.local_timestamp || 0));
+      const emptied = amt(receives) === amt(sends);                       // nothing kept
+      const quick = Math.max(...ts) - Math.min(...ts) <= 3600;            // opened and emptied within an hour
+      const ok = receives.length >= 1 && funders.size === 1 && sends.length + receives.length === hist.length && sends.some(x => x.account === ADDRESS) && emptied && quick;
+      const src = ok ? [...funders][0] : null;
+      if (src && src !== a && !ownExtra.has(src) && !COLD.has(src)) { via.set(a, src); viaCache.set(a, src); } else viaCache.set(a, null);
+    } catch { /* node unavailable: treat as its own counterparty this time, re-check later */ }
+  }
+  return via;
+}
+
 // --- data ---------------------------------------------------------------------
 
 let cache = { at: 0, data: null };
@@ -97,7 +134,8 @@ async function load() {
     const q = sql => db.prepare(sql).all();
     const initiatives = q('select * from initiatives order by id');
     const rawLedger = q('select * from ledger order by id');
-    const ledger = reclassifyCold(rawLedger, await coldSenders(rawLedger, body => fetch(RPC, { method: 'POST', body: JSON.stringify(body) }).then(r => r.json())));
+    const rpcFn = body => fetch(RPC, { method: 'POST', body: JSON.stringify(body) }).then(r => r.json());
+    const ledger = reclassifyCold(rawLedger, await coldSenders(rawLedger, rpcFn));
     const decisions = q('select id, ts, initiative_id, summary, rationale from decisions order by id desc');
     const requests = q('select * from requests order by id desc');
     const wakes = q('select id, started_at, ended_at, trigger, model, cost_usd, input_tokens, output_tokens, cache_read_tokens, cache_write_tokens, summary from wakes order by id desc');
@@ -124,7 +162,8 @@ async function load() {
     const ownExtra = (() => { try { return new Set(JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'own-addresses.json'), 'utf8')).addresses.map(a => a.address)); } catch { return new Set(); } })();
     // pursekeeper's own test accounts stay in the log but are not counterparties; the
     // 0.01 XNO threshold (see counterpartyNumbers) keeps dust senders out of the counts.
-    const { external, counterparties } = counterpartyNumbers(ledger, ownExtra);
+    const via = await passthroughSources(ledger, rpcFn, ownExtra);
+    const { external, counterparties } = counterpartyNumbers(ledger, ownExtra, COUNTERPARTY_MIN_RAW, via);
 
     const spent = {};
     for (const r of ledger) if ((r.kind === 'payment_out' || r.kind === 'cost') && r.initiative_id)
@@ -259,7 +298,7 @@ function home(d, sd) {
 <tr><td class="num">${xno(n.sent.nano, 3)}</td><td>sent by pursekeeper in <b>${n.sent.count}</b> payment${n.sent.count === 1 ? '' : 's'} to ${n.sent.addresses} address${n.sent.addresses === 1 ? '' : 'es'}; ${xno(n.received.nano, 3)} received in ${n.received.count}</td></tr>
 <tr><td class="num">${xno(n.burn_30d, 2)}</td><td>spent in the last 30 days, payments plus domains and services. ${xno(n.spent_total, 2)} spent in total. The <a href="${EXPLORER}${ADDRESS}">hot wallet</a> holds ${xno(n.hot + n.receivable, 2)}</td></tr>
 </table>
-<p class="muted">An address that pays pursekeeper counts as a counterparty only once it has sent Ӿ${n.external.min_nano} in total, the same rule the agent's own wallet tool applies, so dust from throwaway accounts cannot inflate the count. The amount received counts every raw. Addresses pursekeeper paid count regardless.</p>
+<p class="muted">An address that pays pursekeeper counts as a counterparty only once it has sent Ӿ${n.external.min_nano} in total, the same rule the agent's own wallet tool applies, so dust from throwaway accounts cannot inflate the count. The amount received counts every raw. Addresses pursekeeper paid count regardless. A one-time pass-through wallet (opened by one receive from one account, emptied to pursekeeper and a platform fee, as Subnano purchases and tips arrive) is counted as the account that funded it${n.external.passthrough_wallets ? `; ${n.external.passthrough_wallets} such wallet${n.external.passthrough_wallets === 1 ? '' : 's'} so far` : ''}.</p>
 <p class="muted">Also counted, but by hand and only in reviews: code shipped by someone else that uses what pursekeeper built, and mentions it did not pay for. Followers, page views and pursekeeper's own transactions are not the point.</p>
 <p class="muted">Per address, from the chain: was the wallet opened by pursekeeper's payment or already funded, grant-funded or independently earned, when it first spent, and whether it came back. <a href="/cohorts">Counterparty cohorts →</a></p>
 
@@ -464,4 +503,4 @@ async function handle(req, res, u, send) {
   return false;
 }
 
-module.exports = { handle, page, redact, esc, xno, addr, hash, when, day, counterpartyNumbers, reclassifyCold, coldSenders, COLD, nanoToRaw, COUNTERPARTY_MIN_NANO, COUNTERPARTY_MIN_RAW, DB_PATH, RPC, ADDRESS, EXPLORER };
+module.exports = { handle, page, redact, esc, xno, addr, hash, when, day, counterpartyNumbers, reclassifyCold, coldSenders, passthroughSources, COLD, nanoToRaw, COUNTERPARTY_MIN_NANO, COUNTERPARTY_MIN_RAW, DB_PATH, RPC, ADDRESS, EXPLORER };
