@@ -244,8 +244,9 @@ async function workGenerate(req, res) {
   try {
     const knownPayer = !paid && await isKnownPayerFrontier(hash);
     const r = await workFor(hash, { paid, knownPayer });
+    logReq(req, { kind: 'work', hash, ok: true, paid, tier: r.tier, source: r.source, ms: r.ms });
     return send(res, 200, { hash, work: r.work, threshold: x402.WORK_THRESHOLD, source: r.source, ms: r.ms, paid, tier: r.tier });
-  } catch (e) { return send(res, 502, { error: 'work_generate: ' + e.message }); }
+  } catch (e) { logReq(req, { kind: 'work', hash, ok: false, paid, error: e.message }); return send(res, 502, { error: 'work_generate: ' + e.message }); }
   finally { workInFlight--; }
 }
 
@@ -260,6 +261,30 @@ const checkHits = new Map();
 const CHECKS_FILE = path.join(__dirname, 'data', 'checks.json');
 let checks = { verify: 0, receivable: 0, ips: {}, since: new Date().toISOString() };
 try { checks = { ...checks, ...JSON.parse(fs.readFileSync(CHECKS_FILE, 'utf8')) }; } catch {}
+// Request log for /v1/work and /v1/process: one JSON line per call, no raw IPs (sha256 prefix
+// like checks.json). Exists so a report that says "I did not use pursekeeper.dev for work or
+// broadcast" can be checked from here, and so a hosted-runtime run can point at its own line.
+const REQ_LOG = path.join(__dirname, 'data', 'requests.jsonl');
+function ipKey(req) {
+  const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
+  return crypto.createHash('sha256').update(ip).digest('hex').slice(0, 12);
+}
+function logReq(req, entry) {
+  const line = JSON.stringify({ ts: new Date().toISOString(), ip_key: ipKey(req), ...entry });
+  try { fs.appendFileSync(REQ_LOG, line + '\n'); } catch {}
+}
+// Entries whose `hash` or `previous` equals H, newest first, at most `limit`. Reads the whole
+// file; fine at the sizes this log sees. Returns [] if the log does not exist yet.
+function reqLogFor(hash, limit = 20) {
+  let lines = [];
+  try { lines = fs.readFileSync(REQ_LOG, 'utf8').split('\n').filter(Boolean); } catch { return []; }
+  const out = [];
+  for (let i = lines.length - 1; i >= 0 && out.length < limit; i--) {
+    let e; try { e = JSON.parse(lines[i]); } catch { continue; }
+    if (e.hash === hash || e.previous === hash) out.push(e);
+  }
+  return out;
+}
 function countCheck(kind, req) {
   const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
   const key = crypto.createHash('sha256').update(ip).digest('hex').slice(0, 12);
@@ -363,6 +388,7 @@ async function processBlock(req, res) {
   if (block.type !== 'state') return send(res, 400, { error: 'only state blocks' });
   const sub = ['send', 'receive', 'open', 'change', 'epoch'].includes(body.subtype) ? body.subtype : undefined;
   const r = await rpc({ action: 'process', json_block: 'true', ...(sub ? { subtype: sub } : {}), block });
+  logReq(req, { kind: 'process', hash: r.hash || null, previous: String(block.previous || '').toUpperCase(), account: block.account, subtype: sub || null, ok: !r.error, error: r.error || null });
   if (r.error) return send(res, 400, { ok: false, error: 'node: ' + r.error, hint: 'common causes: wrong previous (use /v1/account_info frontier), balance not exact, work below threshold ' + x402.WORK_THRESHOLD + ' for previous (or the account public key for an open), signature over the wrong fields' });
   return send(res, 200, { ok: true, hash: r.hash, subtype: sub, note: 'broadcast; check confirmation with /v1/verify?hash=' + r.hash, node: 'pursekeeper.dev' });
 }
@@ -469,6 +495,7 @@ Endpoints
                               confirmation_height (null if the node gives none) (free, 60/min);
                               found:false with the open-block rule if the account has no blocks
   POST /v1/process {"block":{...state block...},"subtype":"send|receive|open|change"}
+  GET  /v1/requests?hash=H   was H (or a block with previous H) worked or broadcast through here? {found, entries}. Free, 60/min
                               broadcast a signed state block through this node (free, 60/min).
                               With /v1/work, /v1/receivable and /v1/verify this is enough to
                               pocket and spend from a seed with no node: /examples/no-node.md
@@ -532,6 +559,13 @@ const server = http.createServer(async (req, res) => {
     if (u.pathname === '/v1/receivable') return receivable(req, res, u);
     if (u.pathname === '/v1/account_info') return accountInfo(req, res, u);
     if (u.pathname === '/v1/process' && req.method === 'POST') return processBlock(req, res);
+    if (u.pathname === '/v1/requests' && req.method === 'GET') {
+      if (overFreeLimit(req, checkHits, 60)) return send(res, 429, { error: 'limit is 60 checks per minute per IP' });
+      const h = String(u.searchParams.get('hash') || '').toUpperCase();
+      if (!/^[0-9A-F]{64}$/.test(h)) return send(res, 400, { error: 'hash must be 64 hex characters (a block hash, or the frontier work was asked for)' });
+      const entries = reqLogFor(h);
+      return send(res, 200, { hash: h, found: entries.length > 0, entries, note: 'every /v1/work and /v1/process call since 2026-09-16 is logged here by hash; absence means pursekeeper.dev was not used for that block' });
+    }
     if (u.pathname === '/v1/credit') {
       const c = await creditFor(u.searchParams.get('hash') || '');
       return send(res, c.error ? 400 : 200, c.error ? { error: c.error } : { remaining_raw: c.remaining.toString(), remaining_nano: nano(c.remaining) });
@@ -557,4 +591,4 @@ const server = http.createServer(async (req, res) => {
   }
 });
 if (require.main === module) server.listen(PORT, '127.0.0.1', () => console.log('listening on', PORT));
-module.exports = { shapeAccountInfo };
+module.exports = { shapeAccountInfo, logReq, reqLogFor, REQ_LOG };
